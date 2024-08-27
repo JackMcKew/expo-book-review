@@ -88,8 +88,19 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
       // Get the visitor identifier when you need it.
       const fp = await fpPromise;
       const result = await fp.get();
-      await supabase.from("users").upsert({ externalID: result.visitorId }); // Create a new user if one doesn't exist
+      const user = await supabase
+        .from("users")
+        .select("id")
+        .eq("externalID", result.visitorId);
+      //   User not found, create
       setExternalID(result.visitorId);
+      if (user.data && user.data.length > 0) {
+        await supabase
+          .from("users")
+          .upsert({ id: user.data[0].id, externalID: result.visitorId }); // Create a new user if one doesn't exist
+      } else {
+        await supabase.from("users").upsert({ externalID: result.visitorId }); // Create a new user if one doesn't exist
+      }
     })();
   }, []);
 
