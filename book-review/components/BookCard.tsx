@@ -43,7 +43,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
     setExpanded(!expanded);
   };
 
-  const submitReview = async (rating: number, review: string) => {};
+  const submitReview = async (rating: number, review: string) => {
+    setErrorText("asd");
+  };
 
   const textInputStyle = {
     height: 40,
@@ -105,33 +107,29 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
         {expanded && (
           <View style={styles.textBlocksContainer}>
             {book.reviews.map(({ text, rating }, index) => (
-              <div style={{ display: "flex" }}>
-                {/* For each rating show a</div> star */}
-                <div style={{ width: "150px" }}>
-                  {Array.from({ length: rating }, (_, index) => (
-                    <FontAwesome
-                      key={index}
-                      name="star"
-                      size={18}
-                      color="yellow"
-                      style={{ marginRight: 5 }}
-                    />
-                  ))}
-                  {Array.from({ length: 5 - rating }, (_, index) => (
-                    <FontAwesome
-                      key={index}
-                      name="star-o"
-                      size={18}
-                      color="yellow"
-                      style={{ marginRight: 5 }}
-                    />
-                  ))}
-                </div>
-
+              <View style={{ flex: 1, flexDirection: "row" }}>
+                {Array.from({ length: rating }, (_, index) => (
+                  <FontAwesome
+                    key={index}
+                    name="star"
+                    size={18}
+                    color="yellow"
+                    style={{ marginRight: 5 }}
+                  />
+                ))}
+                {Array.from({ length: 5 - rating }, (_, index) => (
+                  <FontAwesome
+                    key={index}
+                    name="star-o"
+                    size={18}
+                    color="yellow"
+                    style={{ marginRight: 5 }}
+                  />
+                ))}
                 <Text key={index} style={styles.textBlock}>
                   {text}
                 </Text>
-              </div>
+              </View>
             ))}
             <FAB
               style={styles.fab}
