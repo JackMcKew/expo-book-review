@@ -14,8 +14,9 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { Book } from "../types";
 import BookCard from "../components/BookCard";
-import { supabase } from "../utils/supabase";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import { fetch, submit } from "../services/books";
+import { upsert } from "../services/users";
 
 // Initialize an agent at application startup.
 const fpPromise = FingerprintJS.load();
@@ -49,33 +50,23 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const submitBook = async (bookTitle: string, author: string) => {
-    const user = await supabase
-      .from("users")
-      .select("id")
-      .eq("externalID", externalID);
-
-    if (!user.data || (user.data && !(user.data.length > 0))) {
-      setErrorText("Error fetching user");
+    try {
+      await submit(externalID, bookTitle, author);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorText(err.message);
+      }
     }
-    await supabase.from("books").insert({
-      title: bookTitle,
-      author: author,
-      createdBy: user?.data?.[0].id,
-    });
     await fetchBooks();
     hideModal();
   };
 
   const fetchBooks = async () => {
     try {
-      const { data } = await supabase
-        .from("books")
-        .select(`id, title, author, reviews(*)`);
-      setBooks(data as Book[]);
+      const books = await fetch();
+      setBooks(books);
     } catch (error) {
-      console.error("Error fetching books: ", error);
-    } finally {
-      setLoading(false);
+      setErrorText("Error fetching book");
     }
   };
 
@@ -88,19 +79,9 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
       // Get the visitor identifier when you need it.
       const fp = await fpPromise;
       const result = await fp.get();
-      const user = await supabase
-        .from("users")
-        .select("id")
-        .eq("externalID", result.visitorId);
       //   User not found, create
+      await upsert(result.visitorId);
       setExternalID(result.visitorId);
-      if (user.data && user.data.length > 0) {
-        await supabase
-          .from("users")
-          .upsert({ id: user.data[0].id, externalID: result.visitorId }); // Create a new user if one doesn't exist
-      } else {
-        await supabase.from("users").upsert({ externalID: result.visitorId }); // Create a new user if one doesn't exist
-      }
     })();
   }, []);
 

@@ -16,6 +16,7 @@ import {
 import { Book } from "../types";
 import { FontAwesome } from "@expo/vector-icons";
 import { supabase } from "../utils/supabase";
+import { submit } from "../services/reviews";
 
 interface BookCardProps {
   book: Book;
@@ -58,31 +59,14 @@ const BookCard: React.FC<BookCardProps> = ({
     rating: number,
     review: string
   ) => {
-    const user = await supabase
-      .from("users")
-      .select("id")
-      .eq("externalID", externalID);
-
-    if (!user.data || (user.data && !(user.data.length > 0))) {
-      setErrorText("Error fetching user");
+    try {
+      await submit(externalID, bookID, rating, review);
+      await updateParent();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorText(err.message);
+      }
     }
-    // Check that a user hasn't review this book before
-    const { data: existingReviews } = await supabase
-      .from("reviews")
-      .select("*")
-      .eq("book", bookID)
-      .eq("createdBy", user?.data?.[0].id);
-    if (existingReviews && existingReviews.length > 0) {
-      setErrorText("You've already submitted a review for this book");
-      return
-    }
-    await supabase.from("reviews").insert({
-      book: bookID,
-      rating: rating,
-      review: review,
-      createdBy: user?.data?.[0].id,
-    });
-    await updateParent();
     hideModal();
   };
 
