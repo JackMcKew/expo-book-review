@@ -1,5 +1,13 @@
 # Book Review - Expo
 
+LIVE DEMO! <https://jackmckew.github.io/expo-book-review/>
+
+## Technology Stack
+
+- Expo with React Native using Typescript for Front end (iOS, Android and Web)
+- Supabase with PostgreSQL for our API & Database
+- Jest for testing
+
 ## Install & Run
 
 1. Clone this repo
