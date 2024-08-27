@@ -32,11 +32,25 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
       id: 1,
       title: "Huckleberry Finn",
       author: "Mark Twain",
+      reviews: [
+        {
+          id: 1,
+          rating: 5,
+          text: "This is a great book!",
+        },
+      ],
     },
     {
       id: 2,
       title: "Moby Dick",
       author: "Big Dave",
+      reviews: [
+        {
+          id: 1,
+          rating: 0,
+          text: "This sucked",
+        },
+      ],
     },
   ]);
   const [loading, setLoading] = useState<boolean>(true);
