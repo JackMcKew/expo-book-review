@@ -32,14 +32,7 @@ interface Props {
 const BookListScreen: React.FC<Props> = ({ navigation }) => {
   const theme = useTheme();
   const [externalID, setExternalID] = useState<string>("");
-  (async () => {
-    // Get the visitor identifier when you need it.
-    const fp = await fpPromise;
-    const result = await fp.get();
-    await supabase.from("users").upsert({ externalID: result.visitorId }); // Create a new user if one doesn't exist
-    console.log(result.visitorId);
-    setExternalID(result.visitorId);
-  })();
+
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -71,7 +64,6 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
     });
     await fetchBooks();
     hideModal();
-
   };
 
   const fetchBooks = async () => {
@@ -79,7 +71,6 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
       const { data } = await supabase
         .from("books")
         .select(`id, title, author, reviews(*)`);
-      console.log(data);
       setBooks(data as Book[]);
     } catch (error) {
       console.error("Error fetching books: ", error);
@@ -90,6 +81,16 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
 
   useEffect(() => {
     fetchBooks();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      // Get the visitor identifier when you need it.
+      const fp = await fpPromise;
+      const result = await fp.get();
+      await supabase.from("users").upsert({ externalID: result.visitorId }); // Create a new user if one doesn't exist
+      setExternalID(result.visitorId);
+    })();
   }, []);
 
   if (loading) {
@@ -144,21 +145,21 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
             />
           </Modal>
         </Portal>
-        {books && (
-          <FlatList
-            data={books}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <BookCard
-                book={item}
-                onPress={() =>
-                  navigation.navigate("BookDetails", { bookId: item.id })
-                }
-              />
-            )}
-            contentContainerStyle={styles.list}
-          />
-        )}
+        <FlatList
+          data={books}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <BookCard
+              book={item}
+              externalID={externalID}
+              updateParent={fetchBooks}
+              onPress={() =>
+                navigation.navigate("BookDetails", { bookId: item.id })
+              }
+            />
+          )}
+          contentContainerStyle={styles.list}
+        />
         <FAB style={styles.fab} icon="plus" onPress={() => showModal()} />
       </View>
     </PaperProvider>
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    paddingBottom: 80,
+    paddingBottom: 160,
   },
   fab: {
     position: "absolute",

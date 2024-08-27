@@ -1,5 +1,5 @@
 // src/components/BookCard.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
   Card,
@@ -15,13 +15,21 @@ import {
 } from "react-native-paper";
 import { Book } from "../types";
 import { FontAwesome } from "@expo/vector-icons";
+import { supabase } from "../utils/supabase";
 
 interface BookCardProps {
   book: Book;
+  externalID: string;
+  updateParent: () => Promise<void>;
   onPress: () => void;
 }
 
-const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
+const BookCard: React.FC<BookCardProps> = ({
+  book,
+  externalID,
+  updateParent,
+  onPress,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [reviewText, setReviewText] = useState("");
@@ -35,7 +43,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
     let updatedRating = rating.replace(/[^0-9]/g, "");
     if (Number(updatedRating) > 5 || Number(updatedRating) < 1) {
       setErrorText("The rating must be between 1 and 5.");
-      setRating("")
+      setRating("");
       return;
     }
     setRating(updatedRating);
@@ -45,9 +53,36 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
     setExpanded(!expanded);
   };
 
-  const submitReview = async (rating: number, review: string) => {
+  const submitReview = async (
+    bookID: number,
+    rating: number,
+    review: string
+  ) => {
+    const user = await supabase
+      .from("users")
+      .select("id")
+      .eq("externalID", externalID);
+
+    if (!user.data || (user.data && !(user.data.length > 0))) {
+      setErrorText("Error fetching user");
+    }
     // Check that a user hasn't review this book before
-    setErrorText("We faced an error submitting your review :(");
+    const { data: existingReviews } = await supabase
+      .from("reviews")
+      .select("*")
+      .eq("book", bookID)
+      .eq("createdBy", user?.data?.[0].id);
+    if (existingReviews && existingReviews.length > 0) {
+      setErrorText("You've already submitted a review for this book");
+    }
+    await supabase.from("reviews").insert({
+      book: bookID,
+      rating: rating,
+      review: review,
+      createdBy: user?.data?.[0].id,
+    });
+    await updateParent();
+    hideModal();
   };
 
   const textInputStyle = {
@@ -103,13 +138,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
               style={styles.submitFAB}
               icon="check"
               label="Submit review"
-              onPress={() => submitReview(Number(rating), reviewText)}
+              onPress={() => submitReview(book.id, Number(rating), reviewText)}
             />
           </Modal>
         </Portal>
         {expanded && (
           <View style={styles.textBlocksContainer}>
-            {book.reviews.map(({ text, rating }, index) => (
+            {book.reviews.map(({ review, rating }, index) => (
               <View style={{ flex: 1, flexDirection: "row" }}>
                 {Array.from({ length: rating }, (_, index) => (
                   <FontAwesome
@@ -130,10 +165,13 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
                   />
                 ))}
                 <Text key={index} style={styles.textBlock}>
-                  {text}
+                  {review}
                 </Text>
               </View>
             ))}
+            {book.reviews.length === 0 && (
+              <Text style={styles.textBlock}>No reviews yet</Text>
+            )}
             <FAB
               style={styles.fab}
               icon="plus"
