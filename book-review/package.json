@@ -11,9 +11,13 @@
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
     "@expo/vector-icons": "^14.0.2",
+    "@fingerprintjs/fingerprintjs": "^4.4.3",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/stack": "^6.4.1",
+    "@supabase/supabase-js": "^2.45.2",
     "axios": "^1.7.5",
+    "dotenv": "^16.4.5",
     "expo": "~51.0.28",
     "expo-status-bar": "~1.12.1",
     "formik": "^2.4.6",
@@ -21,6 +25,7 @@
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
     "react-native-paper": "^5.12.5",
+    "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "~0.19.10",
     "yup": "^1.4.0"
   },

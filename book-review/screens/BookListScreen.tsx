@@ -14,7 +14,11 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { Book } from "../types";
 import BookCard from "../components/BookCard";
-import api from "../services/api";
+import { supabase } from "../utils/supabase";
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
+
+// Initialize an agent at application startup.
+const fpPromise = FingerprintJS.load();
 
 type BookListScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -27,32 +31,16 @@ interface Props {
 
 const BookListScreen: React.FC<Props> = ({ navigation }) => {
   const theme = useTheme();
-  const [books, setBooks] = useState<Book[]>([
-    {
-      id: 1,
-      title: "Huckleberry Finn",
-      author: "Mark Twain",
-      reviews: [
-        {
-          id: 1,
-          rating: 5,
-          text: "This is a great book!",
-        },
-      ],
-    },
-    {
-      id: 2,
-      title: "Moby Dick",
-      author: "Big Dave",
-      reviews: [
-        {
-          id: 1,
-          rating: 0,
-          text: "This sucked",
-        },
-      ],
-    },
-  ]);
+  const [externalID, setExternalID] = useState<string>("");
+  (async () => {
+    // Get the visitor identifier when you need it.
+    const fp = await fpPromise;
+    const result = await fp.get();
+    await supabase.from("users").upsert({ externalID: result.visitorId }); // Create a new user if one doesn't exist
+    console.log(result.visitorId);
+    setExternalID(result.visitorId);
+  })();
+  const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [modalVisible, setModalVisible] = useState(false);
   const showModal = () => setModalVisible(true);
@@ -68,13 +56,31 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const submitBook = async (bookTitle: string, author: string) => {
-    setErrorText(bookTitle);
+    const user = await supabase
+      .from("users")
+      .select("id")
+      .eq("externalID", externalID);
+
+    if (!user.data || (user.data && !(user.data.length > 0))) {
+      setErrorText("Error fetching user");
+    }
+    await supabase.from("books").insert({
+      title: bookTitle,
+      author: author,
+      createdBy: user?.data?.[0].id,
+    });
+    await fetchBooks();
+    hideModal();
+
   };
 
   const fetchBooks = async () => {
     try {
-      const response = await api.get("/books");
-      setBooks(response.data);
+      const { data } = await supabase
+        .from("books")
+        .select(`id, title, author, reviews(*)`);
+      console.log(data);
+      setBooks(data as Book[]);
     } catch (error) {
       console.error("Error fetching books: ", error);
     } finally {
@@ -83,9 +89,8 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", fetchBooks);
-    return unsubscribe;
-  }, [navigation]);
+    fetchBooks();
+  }, []);
 
   if (loading) {
     return (
@@ -134,24 +139,26 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
             <FAB
               style={styles.submitFAB}
               icon="check"
-              label="Submit review"
+              label="Submit book"
               onPress={() => submitBook(bookTitle, author)}
             />
           </Modal>
         </Portal>
-        <FlatList
-          data={books}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <BookCard
-              book={item}
-              onPress={() =>
-                navigation.navigate("BookDetails", { bookId: item.id })
-              }
-            />
-          )}
-          contentContainerStyle={styles.list}
-        />
+        {books && (
+          <FlatList
+            data={books}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <BookCard
+                book={item}
+                onPress={() =>
+                  navigation.navigate("BookDetails", { bookId: item.id })
+                }
+              />
+            )}
+            contentContainerStyle={styles.list}
+          />
+        )}
         <FAB style={styles.fab} icon="plus" onPress={() => showModal()} />
       </View>
     </PaperProvider>
