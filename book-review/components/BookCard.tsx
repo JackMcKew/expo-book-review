@@ -74,6 +74,7 @@ const BookCard: React.FC<BookCardProps> = ({
       .eq("createdBy", user?.data?.[0].id);
     if (existingReviews && existingReviews.length > 0) {
       setErrorText("You've already submitted a review for this book");
+      return
     }
     await supabase.from("reviews").insert({
       book: bookID,
@@ -98,7 +99,7 @@ const BookCard: React.FC<BookCardProps> = ({
         <Title>{book.title}</Title>
         <Paragraph>{book.author}</Paragraph>
         <Button onPress={handleToggleExpand}>
-          {expanded ? "Show Less" : "Show More"}
+          {expanded ? "Hide reviews" : "Show reviews"}
         </Button>
         <Portal>
           <Modal
