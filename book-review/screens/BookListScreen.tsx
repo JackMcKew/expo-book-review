@@ -8,6 +8,7 @@ import {
   Portal,
   Text,
   TextInput,
+  useTheme,
 } from "react-native-paper";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const BookListScreen: React.FC<Props> = ({ navigation }) => {
+  const theme = useTheme();
   const [books, setBooks] = useState<Book[]>([
     {
       id: 1,
@@ -43,13 +45,13 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
   const hideModal = () => setModalVisible(false);
   const [bookTitle, setBookTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const containerStyle = { backgroundColor: "white", padding: 100 };
+  const containerStyle = {};
   const textInputStyle = {
     height: 40,
     marginBottom: 15,
-    backgroundColor: "white",
+    backgroundColor: theme.colors.background,
     // padding: 10,
-    // width: 250,
+    width: 250,
   };
 
   const fetchBooks = async () => {
@@ -83,9 +85,14 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
           <Modal
             visible={modalVisible}
             onDismiss={hideModal}
-            contentContainerStyle={containerStyle}
+            contentContainerStyle={{
+              backgroundColor: theme.colors.background,
+              padding: 100,
+              alignSelf: "center",
+              borderRadius: 32,
+            }}
           >
-            <Text variant="titleLarge">
+            <Text variant="titleLarge" style={{ marginBottom: 15 }}>
               Add a new book for others to review
             </Text>
             <TextInput
