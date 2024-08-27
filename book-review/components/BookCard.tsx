@@ -25,7 +25,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
   const [expanded, setExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [reviewText, setReviewText] = useState("");
-  const [rating, setRating] = useState("0");
+  const [rating, setRating] = useState("1");
   const showModal = () => setModalVisible(true);
   const hideModal = () => setModalVisible(false);
   const [errorText, setErrorText] = useState("");
@@ -33,8 +33,10 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
 
   const handleSetRating = (rating: string) => {
     let updatedRating = rating.replace(/[^0-9]/g, "");
-    if (Number(updatedRating) > 5) {
-      updatedRating = "5";
+    if (Number(updatedRating) > 5 || Number(updatedRating) < 1) {
+      setErrorText("The rating must be between 1 and 5.");
+      setRating("")
+      return;
     }
     setRating(updatedRating);
   };
@@ -44,7 +46,8 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
   };
 
   const submitReview = async (rating: number, review: string) => {
-    setErrorText("asd");
+    // Check that a user hasn't review this book before
+    setErrorText("We faced an error submitting your review :(");
   };
 
   const textInputStyle = {
@@ -78,7 +81,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
             </Text>
             {errorText && (
               <Text style={{ color: "red", marginBottom: 15 }}>
-                We faced an error submitting your review :(
+                {errorText}
               </Text>
             )}
             <TextInput
