@@ -19,8 +19,6 @@ describe("Book Service", () => {
         const mockUserValue = 1
       getUser.mockResolvedValueOnce({ data: [{ id: mockUserValue }] });
       await submit(testSubmitValues[0], testSubmitValues[1], testSubmitValues[2]);
-      console.log(getUser.mock.calls);
-      console.log(insertBook.mock.calls);
       expect(insertBook.mock.calls).toEqual([[mockUserValue, testSubmitValues[1], testSubmitValues[2]]]);
     });
   });

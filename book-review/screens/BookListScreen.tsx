@@ -68,6 +68,7 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
     } catch (error) {
       setErrorText("Error fetching book");
     }
+    setLoading(false)
   };
 
   useEffect(() => {
