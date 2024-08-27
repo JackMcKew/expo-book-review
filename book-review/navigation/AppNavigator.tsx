@@ -3,7 +3,6 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import BookListScreen from '../screens/BookListScreen';
-import AddBookModal from '../screens/AddBook';
 
 export type RootStackParamList = {
   BookList: undefined;

@@ -54,18 +54,21 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
     },
   ]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [modalVisible, setModalVisible] = React.useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const showModal = () => setModalVisible(true);
   const hideModal = () => setModalVisible(false);
+  const [errorText, setErrorText] = useState("");
   const [bookTitle, setBookTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const containerStyle = {};
   const textInputStyle = {
     height: 40,
     marginBottom: 15,
     backgroundColor: theme.colors.background,
-    // padding: 10,
     width: 250,
+  };
+
+  const submitBook = async (bookTitle: string, author: string) => {
+    setErrorText(bookTitle);
   };
 
   const fetchBooks = async () => {
@@ -109,6 +112,11 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
             <Text variant="titleLarge" style={{ marginBottom: 15 }}>
               Add a new book for others to review
             </Text>
+            {errorText && (
+              <Text style={{ color: "red", marginBottom: 15 }}>
+                We faced an error submitting your book :(
+              </Text>
+            )}
             <TextInput
               mode="outlined"
               style={textInputStyle}
@@ -122,6 +130,12 @@ const BookListScreen: React.FC<Props> = ({ navigation }) => {
               label={"Author"}
               value={author}
               onChangeText={(text) => setAuthor(text)}
+            />
+            <FAB
+              style={styles.submitFAB}
+              icon="check"
+              label="Submit review"
+              onPress={() => submitBook(bookTitle, author)}
             />
           </Modal>
         </Portal>
@@ -159,6 +173,11 @@ const styles = StyleSheet.create({
   loader: {
     flex: 1,
     justifyContent: "center",
+  },
+  submitFAB: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
   },
 });
 

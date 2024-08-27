@@ -1,7 +1,18 @@
 // src/components/BookCard.tsx
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Card, Title, Paragraph, Button, Text } from "react-native-paper";
+import {
+  Card,
+  Title,
+  Paragraph,
+  Button,
+  Text,
+  FAB,
+  Portal,
+  Modal,
+  useTheme,
+  TextInput,
+} from "react-native-paper";
 import { Book } from "../types";
 import { FontAwesome } from "@expo/vector-icons";
 
@@ -12,9 +23,33 @@ interface BookCardProps {
 
 const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
   const [expanded, setExpanded] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [rating, setRating] = useState("0");
+  const showModal = () => setModalVisible(true);
+  const hideModal = () => setModalVisible(false);
+  const [errorText, setErrorText] = useState("");
+  const theme = useTheme();
+
+  const handleSetRating = (rating: string) => {
+    let updatedRating = rating.replace(/[^0-9]/g, "");
+    if (Number(updatedRating) > 5) {
+      updatedRating = "5";
+    }
+    setRating(updatedRating);
+  };
 
   const handleToggleExpand = () => {
     setExpanded(!expanded);
+  };
+
+  const submitReview = async (rating: number, review: string) => {};
+
+  const textInputStyle = {
+    height: 40,
+    marginBottom: 15,
+    backgroundColor: theme.colors.background,
+    width: 250,
   };
 
   return (
@@ -25,6 +60,48 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
         <Button onPress={handleToggleExpand}>
           {expanded ? "Show Less" : "Show More"}
         </Button>
+        <Portal>
+          <Modal
+            visible={modalVisible}
+            onDismiss={hideModal}
+            contentContainerStyle={{
+              backgroundColor: theme.colors.background,
+              padding: 100,
+              alignSelf: "center",
+              borderRadius: 32,
+            }}
+          >
+            <Text variant="titleLarge" style={{ marginBottom: 15 }}>
+              Add a review for {book.title}
+            </Text>
+            {errorText && (
+              <Text style={{ color: "red", marginBottom: 15 }}>
+                We faced an error submitting your review :(
+              </Text>
+            )}
+            <TextInput
+              mode="outlined"
+              style={textInputStyle}
+              keyboardType="numeric"
+              label={"Book rating"}
+              value={`${rating}`}
+              onChangeText={(text) => handleSetRating(`${text}`)}
+            />
+            <TextInput
+              mode="outlined"
+              style={textInputStyle}
+              label={"Review"}
+              value={reviewText}
+              onChangeText={(text) => setReviewText(text)}
+            />
+            <FAB
+              style={styles.submitFAB}
+              icon="check"
+              label="Submit review"
+              onPress={() => submitReview(Number(rating), reviewText)}
+            />
+          </Modal>
+        </Portal>
         {expanded && (
           <View style={styles.textBlocksContainer}>
             {book.reviews.map(({ text, rating }, index) => (
@@ -49,7 +126,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
                       style={{ marginRight: 5 }}
                     />
                   ))}
-
                 </div>
 
                 <Text key={index} style={styles.textBlock}>
@@ -57,6 +133,12 @@ const BookCard: React.FC<BookCardProps> = ({ book, onPress }) => {
                 </Text>
               </div>
             ))}
+            <FAB
+              style={styles.fab}
+              icon="plus"
+              label="Add review"
+              onPress={() => showModal()}
+            />
           </View>
         )}
       </Card.Content>
@@ -70,10 +152,21 @@ const styles = StyleSheet.create({
   },
   textBlocksContainer: {
     marginTop: 10,
+    marginBottom: 20,
   },
   textBlock: {
     marginBottom: 5,
     fontSize: 14,
+  },
+  fab: {
+    position: "absolute",
+    right: 16,
+    top: -6,
+  },
+  submitFAB: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
   },
 });
 
